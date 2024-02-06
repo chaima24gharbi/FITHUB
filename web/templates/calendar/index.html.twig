@@ -1,0 +1,92 @@
+{% block title %}Calendar{% endblock %}
+
+{% block stylesheets %}
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/fullcalendar.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block body %}
+        <div id='calendar'></div>
+        <button id='refresh-calendar'>Refresh Calendar</button>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/5.10.2/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/fullcalendar.min.js'></script>
+
+    <script>
+        function initCalendar(consultations, calendarEl) {
+            console.table(consultations);
+            // Initialize an empty events array
+            events = [];
+
+            // Loop through each seance and add it to the events array
+            consultations.forEach(function(consultation) {
+                // Generate a random color
+                var colors = ['#FF5733', '#D4AC0D', '#8BC34A', '#2196F3', '#9C27B0'];
+                var randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // Add the seance to the events array
+                //events.push({
+                    //title: seance.titreSeance,
+                    //start: seance.dateDebutSeance,
+                    //end: seance.dateFinSeance,
+                    //backgroundColor: randomColor,
+                    //borderColor: randomColor,
+                    //textColor: '#fff', // white text color for better visibility
+                   // url: '/app_seance_show/' + seance.id // link to the app_seance_show page with the seance id
+                //});
+            });
+
+            // Initialize the calendar
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay'
+                },
+                defaultView: 'month',
+                defaultDate: '2023-03-01',
+                navLinks: true,
+                editable: true,
+                eventLimit: true,
+                events: events, // use the events array
+                eventRender: function(event, element) {
+                    // Add click listener to open the app_seance_show page
+                    console.table(events);
+                    element.click(function() {
+                        window.location.href = event.url;
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+              // Get the initial seance data 
+            var consultations = {{ consultations|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }};
+
+              // Check if seances is empty
+            if (consultations.length === 0) {
+                $('#calendar').html('<p>No events to display.</p>');
+                return;
+            }
+
+              // Initialize the calendar with the initial data
+            initCalendar(consultations)
+            console.log(consultations);
+
+
+               // Add event listener to refresh button
+            $('#refresh-calendar').click(function() {
+                   // Get updated seance data from server
+                $.get('app_consultation_calendar', function(updatedConsultations) {
+                      // Destroy the existing FullCalendar instance
+                    $('#calendar').fullCalendar('destroy');
+
+                      // Initialize the calendar with the updated data
+                    initCalendar(updatedConsultations);
+
+                });
+            });
+        });
+    </script>
+{% endblock %}
